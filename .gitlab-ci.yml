@@ -1,0 +1,75 @@
+variables:
+# project variables
+  RF_IMAGE: jfxs/robot-framework:5.0
+  IMAGE_SELENIUM_GC: selenium/standalone-chrome:98.0
+  IMAGE_SELENIUM_FF: selenium/standalone-firefox:99.0
+
+stages:
+  - trendyol-ui-tests
+  - rebot-pages
+
+test-chrome:
+#  retry: 1
+  image: $RF_IMAGE
+  stage: trendyol-ui-tests
+  variables:
+    TZ: Europe/Istanbul
+  services:
+    - name: $IMAGE_SELENIUM_GC
+  before_script:
+    - pip install robotframework-faker
+  script:
+    - robot -v BROWSER:Chrome -v GRID_URL:http://selenium__standalone-chrome:4444/wd/hub --name trendyol-ui-chrome --include trendyol-ui --log none --report none --outputdir reports1 Tests
+  after_script:
+    - mkdir -p reports/
+    - mv reports1/output.xml reports/output1.xml
+    - mv reports1/*.png ./reports
+    - mv reports1/*.html ./reports
+  artifacts:
+    when: always
+    paths:
+      - reports
+    expire_in: 1 week
+
+test-firefox:
+#  retry: 1
+  image: $RF_IMAGE
+  stage: trendyol-ui-tests
+  variables:
+    TZ: Europe/Istanbul
+  services:
+    - name: $IMAGE_SELENIUM_FF
+  before_script:
+    - pip install robotframework-faker
+  script:
+    - robot -v BROWSER:firefox -v GRID_URL:http://selenium__standalone-firefox:4444/wd/hub --name trendyol-ui-firefox --include trendyol-ui --log none --report none --outputdir reports2 Tests
+  after_script:
+    - mkdir -p reports/
+    - mv reports2/output.xml reports/output2.xml
+    - mv reports2/*.png ./reports
+    - mv reports2/*.html ./reports
+  artifacts:
+    when: always
+    paths:
+    - reports
+    expire_in: 1 week
+
+pages:
+  only:
+    refs:
+      - master
+  image: $RF_IMAGE
+  stage: rebot-pages
+  dependencies:
+    - test-chrome
+    - test-firefox
+  script:
+    - rebot --logtitle "$CI_PROJECT_TITLE Test Log" --reporttitle "$CI_PROJECT_TITLE Test Report" --nostatusrc --outputdir public -o output.xml -x rf-xunit.xml reports/*.xml
+    - output2badge.sh -f public/output.xml -d public
+  artifacts:
+    paths:
+      - public
+    reports:
+      junit:
+        - public/rf-xunit.xml
+  when: always

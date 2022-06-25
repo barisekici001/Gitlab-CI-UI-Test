@@ -1,0 +1,8 @@
+robotframework
+robotframework-seleniumLibrary
+robotframework-requests
+xlrd
+openpyxl
+csv23
+robotframework-pandaslibrary
+chromedriver

@@ -1,0 +1,13 @@
+**/*.iml
+**/*.idea
+**/*.vscode
+.idea/
+*.iml
+
+TestResults/**
+
+Results/*
+Results/**
+!Results/*
+
+reports/*
